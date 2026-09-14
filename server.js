@@ -11,7 +11,7 @@ import { CCTNSAdapter } from './server/integrations/cctnsAdapter.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-const PORT = 4000;
+const PORT = Number(process.env.PORT || 4000);
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
 const RP_ID = process.env.RP_ID || 'localhost';
 const RP_NAME = 'NEXUS Investigation Intelligence Platform';
@@ -293,7 +293,14 @@ app.post('/api/cctns/sync', async (req,res) => {
   } catch(e){ res.status(502).json({error:'CCTNS sync failed.',detail:process.env.NODE_ENV==='development'?String(e.message):undefined}); }
 });
 
+app.use(express.static(path.join(__dirname, 'dist')));
+
+app.get('*', (req,res,next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 app.use((_req,res)=>res.status(404).json({ error:'API endpoint not found' }));
 app.listen(Number(process.env.PORT||PORT),'0.0.0.0',async()=>{ console.log(`NEXUS API listening on port ${process.env.PORT||PORT}`); try { const seeded=await ensureDemoData(); console.log('PostgreSQL demo dataset:',seeded); } catch(e) { console.error('PostgreSQL seed skipped:',e.message); } });
+
 
 
